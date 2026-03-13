@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "home": "Home",
+    "japMala": "Jap Mala",
+    "aiGuide": "AI Guide",
+    "kidsZone": "Kids Zone",
+    "audioLibrary": "Audio Library",
+    "videoLibrary": "Video Library",
+    "books": "Books & PDFs",
+    "profile": "Profile",
+    "signIn": "Sign In",
+    "signOut": "Sign Out"
+  },
+  "home": {
+    "quoteTitle": "Daily Spiritual Quote",
+    "mantraTitle": "Today's Mantra",
+    "startMala": "Start Jap Mala",
+    "featuresTitle": "Explore"
+  },
+  "common": {
+    "loading": "Loading…",
+    "error": "Something went wrong. Please try again.",
+    "search": "Search",
+    "favourites": "Favourites",
+    "play": "Play",
+    "pause": "Pause",
+    "reset": "Reset",
+    "save": "Save",
+    "download": "Download",
+    "back": "Back"
+  },
+  "auth": {
+    "signInWithGoogle": "Sign in with Google",
+    "signInWithEmail": "Sign in with Email",
+    "continueAsGuest": "Continue as Guest"
+  },
+  "mala": {
+    "title": "Digital Jap Mala",
+    "count": "Count",
+    "completed": "Completed Malas",
+    "lifetime": "Lifetime Count",
+    "selectMantra": "Select Mantra"
+  }
+}

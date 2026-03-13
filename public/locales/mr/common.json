@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "home": "मुखपृष्ठ",
+    "japMala": "जप माळा",
+    "aiGuide": "AI मार्गदर्शक",
+    "kidsZone": "मुलांचा झोन",
+    "audioLibrary": "ऑडिओ लायब्ररी",
+    "videoLibrary": "व्हिडिओ लायब्ररी",
+    "books": "पुस्तके आणि PDF",
+    "profile": "प्रोफाइल",
+    "signIn": "साइन इन",
+    "signOut": "साइन आउट"
+  },
+  "home": {
+    "quoteTitle": "दैनिक आध्यात्मिक सुविचार",
+    "mantraTitle": "आजचा मंत्र",
+    "startMala": "जप माळा सुरू करा",
+    "featuresTitle": "अन्वेषण करा"
+  },
+  "common": {
+    "loading": "लोड होत आहे…",
+    "error": "काहीतरी चूक झाली. कृपया पुन्हा प्रयत्न करा.",
+    "search": "शोधा",
+    "favourites": "आवडते",
+    "play": "चालवा",
+    "pause": "थांबवा",
+    "reset": "रीसेट",
+    "save": "जतन करा",
+    "download": "डाउनलोड",
+    "back": "मागे"
+  },
+  "auth": {
+    "signInWithGoogle": "Google सह साइन इन करा",
+    "signInWithEmail": "ईमेलसह साइन इन करा",
+    "continueAsGuest": "पाहुणे म्हणून सुरू ठेवा"
+  },
+  "mala": {
+    "title": "डिजिटल जप माळा",
+    "count": "संख्या",
+    "completed": "पूर्ण माळा",
+    "lifetime": "एकूण संख्या",
+    "selectMantra": "मंत्र निवडा"
+  }
+}

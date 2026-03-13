@@ -1,0 +1,44 @@
+{
+  "nav": {
+    "home": "होम",
+    "japMala": "जप माला",
+    "aiGuide": "AI गाइड",
+    "kidsZone": "बच्चों का ज़ोन",
+    "audioLibrary": "ऑडियो लाइब्रेरी",
+    "videoLibrary": "वीडियो लाइब्रेरी",
+    "books": "किताबें और PDF",
+    "profile": "प्रोफ़ाइल",
+    "signIn": "साइन इन",
+    "signOut": "साइन आउट"
+  },
+  "home": {
+    "quoteTitle": "दैनिक आध्यात्मिक उद्धरण",
+    "mantraTitle": "आज का मंत्र",
+    "startMala": "जप माला शुरू करें",
+    "featuresTitle": "अन्वेषण करें"
+  },
+  "common": {
+    "loading": "लोड हो रहा है…",
+    "error": "कुछ गलत हो गया। कृपया पुनः प्रयास करें।",
+    "search": "खोजें",
+    "favourites": "पसंदीदा",
+    "play": "चलाएं",
+    "pause": "रोकें",
+    "reset": "रीसेट",
+    "save": "सहेजें",
+    "download": "डाउनलोड",
+    "back": "वापस"
+  },
+  "auth": {
+    "signInWithGoogle": "Google से साइन इन करें",
+    "signInWithEmail": "ईमेल से साइन इन करें",
+    "continueAsGuest": "अतिथि के रूप में जारी रखें"
+  },
+  "mala": {
+    "title": "डिजिटल जप माला",
+    "count": "गणना",
+    "completed": "पूर्ण मालाएं",
+    "lifetime": "कुल गणना",
+    "selectMantra": "मंत्र चुनें"
+  }
+}

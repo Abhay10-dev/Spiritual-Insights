@@ -55,7 +55,7 @@ export default function ProfilePage() {
         >
           {session?.user?.image ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={session.user.image} alt="Profile" className="h-full w-full rounded-full object-cover" />
+            <img src={session.user.image} alt="Profile" className="h-full w-full rounded-full object-cover" referrerPolicy="no-referrer" />
           ) : (
             '🙏'
           )}

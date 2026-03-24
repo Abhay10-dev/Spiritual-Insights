@@ -1,33 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion } from 'framer-motion'
 import { signIn } from 'next-auth/react'
-import { LogIn, Mail } from 'lucide-react'
+import { LogIn } from 'lucide-react'
 
 export default function SignInPage() {
-  const [email, setEmail] = useState('')
-  const [loading, setLoading] = useState(false)
-  const [message, setMessage] = useState('')
-
-  const handleEmailSignIn = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    setMessage('')
-    try {
-      const res = await signIn('email', { email, redirect: false })
-      if (res?.error) {
-        setMessage('Error sending email. Please try again.')
-      } else {
-        setMessage('Check your email for the magic login link!')
-      }
-    } catch (err) {
-      setMessage('Something went wrong.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleGoogleSignIn = () => {
     signIn('google', { callbackUrl: '/profile' })
   }
@@ -50,7 +27,7 @@ export default function SignInPage() {
 
         <button
           onClick={handleGoogleSignIn}
-          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium shadow-sm hover:shadow-md hover:bg-gray-50 transition-all mb-6"
+          className="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 py-3 rounded-xl font-medium shadow-sm hover:shadow-md hover:bg-gray-50 transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -61,45 +38,6 @@ export default function SignInPage() {
           </svg>
           Continue with Google
         </button>
-
-        <div className="flex items-center w-full mb-6">
-          <div className="flex-1 border-t border-gray-200"></div>
-          <span className="px-3 text-xs text-gray-400 uppercase tracking-widest">Or</span>
-          <div className="flex-1 border-t border-gray-200"></div>
-        </div>
-
-        <form onSubmit={handleEmailSignIn} className="w-full space-y-3">
-          <div className="relative">
-            <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Email address"
-              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-saffron/20 focus:border-saffron text-sm text-gray-700 bg-white/50"
-            />
-          </div>
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-saffron hover:bg-orange-500 text-white py-2.5 rounded-xl font-medium shadow-md transition-all disabled:opacity-50"
-          >
-            {loading ? 'Sending...' : 'Send Magic Link'}
-          </button>
-        </form>
-
-        <AnimatePresence>
-          {message && (
-            <motion.p
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              className="text-sm mt-4 text-deep-blue font-medium"
-            >
-              {message}
-            </motion.p>
-          )}
-        </AnimatePresence>
       </motion.div>
     </div>
   )

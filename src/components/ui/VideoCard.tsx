@@ -9,10 +9,11 @@ interface VideoCardProps {
   category: string
   duration?: string
   thumbnailEmoji?: string
+  thumbnailUrl?: string
   onClick?: (id: string) => void
 }
 
-export default function VideoCard({ id, title, category, duration, thumbnailEmoji = '🎬', onClick }: VideoCardProps) {
+export default function VideoCard({ id, title, category, duration, thumbnailEmoji, thumbnailUrl, onClick }: VideoCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -22,8 +23,18 @@ export default function VideoCard({ id, title, category, duration, thumbnailEmoj
       onClick={() => onClick?.(id)}
     >
       {/* Thumbnail */}
-      <div className="relative flex h-40 items-center justify-center gradient-spiritual">
-        <span className="text-5xl opacity-70 transition-transform duration-300 group-hover:scale-110">{thumbnailEmoji}</span>
+      <div className="relative flex h-40 items-center justify-center gradient-spiritual overflow-hidden">
+        {thumbnailUrl && (thumbnailUrl.startsWith('http') || thumbnailUrl.startsWith('/')) ? (
+          <img 
+            src={thumbnailUrl} 
+            alt={title} 
+            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" 
+          />
+        ) : (
+          <span className="text-5xl opacity-70 transition-transform duration-300 group-hover:scale-110">
+            {thumbnailEmoji || thumbnailUrl || '🎬'}
+          </span>
+        )}
         <div className="absolute inset-0 flex items-center justify-center bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
           <motion.div
             whileTap={{ scale: 0.9 }}

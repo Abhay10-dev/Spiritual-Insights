@@ -1,19 +1,31 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft, Download } from 'lucide-react'
 
-const COLORING_PAGES = [
-  { id: '1', title: 'Baby Ganesha', emoji: '🐘' },
-  { id: '2', title: 'Peacock Feather', emoji: '🦚' },
-  { id: '3', title: 'Om Symbol Mandala', emoji: '🕉️' },
-  { id: '4', title: 'Diya (Lamp)', emoji: '🪔' },
-  { id: '5', title: 'Lotus Flower', emoji: '🪷' },
-  { id: '6', title: 'Bow and Arrow', emoji: '🏹' },
-]
-
 export default function KidsColoringPage() {
+  const [pages, setPages] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadColoring() {
+      try {
+        const res = await fetch('/api/books')
+        const data = await res.json()
+        const allBooks = data.books || []
+        // Filter for Coloring Books
+        setPages(allBooks.filter((b: any) => b.category === 'Coloring Books'))
+      } catch (err) {
+        console.error('Error loading coloring pages:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    loadColoring()
+  }, [])
+
   return (
     <div className="min-h-screen bg-green-50 pb-16">
       <div className="bg-white border-b border-green-100 px-4 py-4 sticky top-16 z-40">
@@ -28,28 +40,38 @@ export default function KidsColoringPage() {
         <h1 className="text-3xl font-bold text-gray-800 mb-2">🖍️ Coloring Pages</h1>
         <p className="text-gray-500 mb-8">Download and print these beautiful outlines for coloring!</p>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 lg:gap-6">
-          {COLORING_PAGES.map((page, i) => (
-            <motion.div
-              key={page.id}
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: i * 0.05 }}
-              whileHover={{ y: -4 }}
-              className="bg-white rounded-2xl border border-green-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col font-medium"
-            >
-              <div className="aspect-square bg-white border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-7xl mb-4 group cursor-pointer relative">
-                <span className="grayscale opacity-50 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">{page.emoji}</span>
-                <div className="absolute inset-0 bg-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+        {loading ? (
+          <div className="text-center py-20">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-green-600 border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+            </div>
+          </div>
+        ) : pages.length === 0 ? (
+          <p className="text-gray-500 text-center py-10">More coloring pages coming soon!</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 lg:gap-6">
+            {pages.map((page, i) => (
+              <motion.div
+                key={page._id || page.id}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: i * 0.05 }}
+                whileHover={{ y: -4 }}
+                className="bg-white rounded-2xl border border-green-200 p-4 shadow-sm hover:shadow-md transition-all flex flex-col font-medium"
+              >
+                <div className="aspect-square bg-white border-2 border-dashed border-gray-200 rounded-xl flex items-center justify-center text-7xl mb-4 group cursor-pointer relative">
+                  <span className="grayscale opacity-50 transition-all duration-300 group-hover:grayscale-0 group-hover:opacity-100">{page.coverImage || '🖍️'}</span>
+                  <div className="absolute inset-0 bg-green-500/10 opacity-0 group-hover:opacity-100 transition-opacity rounded-xl flex items-center justify-center">
+                  </div>
                 </div>
-              </div>
-              <h3 className="text-gray-800 text-sm sm:text-base text-center mb-3 flex-1">{page.title}</h3>
-              <button className="flex w-full items-center justify-center gap-2 bg-green-100 hover:bg-green-500 hover:text-white text-green-700 py-2 rounded-xl text-sm transition-colors shadow-sm">
-                <Download size={16} /> Print PDF
-              </button>
-            </motion.div>
-          ))}
-        </div>
+                <h3 className="text-gray-800 text-sm sm:text-base text-center mb-3 flex-1">{page.title}</h3>
+                <a href={page.pdfUrl} target="_blank" rel="noopener noreferrer" className="flex w-full items-center justify-center gap-2 bg-green-100 hover:bg-green-500 hover:text-white text-green-700 py-2 rounded-xl text-sm transition-colors shadow-sm border-none cursor-pointer">
+                  <Download size={16} /> Print PDF
+                </a>
+              </motion.div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

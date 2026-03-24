@@ -11,30 +11,6 @@ import { useToast } from '@/store/toastStore'
 
 const CATEGORIES = ['All', 'Bhajans', 'Mantras', 'Aarti', 'Meditation']
 
-interface TrackItem {
-  id: string
-  title: string
-  artist: string
-  category: string
-  duration: string
-  coverEmoji: string
-  fileUrl: string
-}
-
-// Sample tracks — in production these stream from Firebase Storage CDN
-const TRACKS: TrackItem[] = [
-  { id: '1', title: 'Om Namah Shivaya', artist: 'Pandit Ravi Shankar', category: 'Mantras', duration: '8:24', coverEmoji: '🕉️', fileUrl: '' },
-  { id: '2', title: 'Jai Ganesh Jai Ganesh', artist: 'Anuradha Paudwal', category: 'Bhajans', duration: '5:12', coverEmoji: '🐘', fileUrl: '' },
-  { id: '3', title: 'Hanuman Chalisa', artist: 'Hariharan', category: 'Bhajans', duration: '11:03', coverEmoji: '🐒', fileUrl: '' },
-  { id: '4', title: 'Sukhkarta Dukhharta', artist: 'Lata Mangeshkar', category: 'Aarti', duration: '4:35', coverEmoji: '🪔', fileUrl: '' },
-  { id: '5', title: 'Morning Meditation', artist: 'Sri M', category: 'Meditation', duration: '20:00', coverEmoji: '🧘', fileUrl: '' },
-  { id: '6', title: 'Gayatri Mantra', artist: 'Vikram Hazra', category: 'Mantras', duration: '6:47', coverEmoji: '☀️', fileUrl: '' },
-  { id: '7', title: 'Raghupati Raghav Raja Ram', artist: 'Classical Ensemble', category: 'Bhajans', duration: '7:15', coverEmoji: '🏹', fileUrl: '' },
-  { id: '8', title: 'Shri Krishna Aarti', artist: 'Deva Premal', category: 'Aarti', duration: '5:00', coverEmoji: '🦚', fileUrl: '' },
-  { id: '9', title: 'Deep Sleep Meditation', artist: 'Ananda More', category: 'Meditation', duration: '30:00', coverEmoji: '🌙', fileUrl: '' },
-  { id: '10', title: 'Mahamrityunjaya Mantra', artist: 'Shankar Sahney', category: 'Mantras', duration: '9:18', coverEmoji: '🌺', fileUrl: '' },
-]
-
 function formatTime(sec: number) {
   const m = Math.floor(sec / 60)
   const s = Math.floor(sec % 60)
@@ -42,6 +18,8 @@ function formatTime(sec: number) {
 }
 
 export default function AudioPage() {
+  const [tracks, setTracks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [muted, setMuted] = useState(false)
@@ -53,13 +31,35 @@ export default function AudioPage() {
     setPlaylist,
   } = useAudioStore()
 
-  const { success, info } = useToast()
+  const { success, info, error: toastError } = useToast()
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Keep playlist in sync
+  // Fetch Tracks
   useEffect(() => {
-    setPlaylist(TRACKS.map((t) => ({ id: t.id, title: t.title, artist: t.artist, category: t.category, fileUrl: t.fileUrl, albumImage: t.coverEmoji })))
-  }, [setPlaylist])
+    const fetchTracks = async () => {
+      try {
+        const res = await fetch('/api/audio-library')
+        const data = await res.json()
+        if (data.tracks) {
+          setTracks(data.tracks)
+          setPlaylist(data.tracks.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            category: t.category,
+            fileUrl: t.fileUrl,
+            albumImage: t.albumImage || t.coverEmoji
+          })))
+        }
+      } catch (err) {
+        console.error('Failed to fetch tracks:', err)
+        toastError('Failed to load audio library.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchTracks()
+  }, [setPlaylist, toastError])
 
   // Create/manage the Audio element
   useEffect(() => {
@@ -112,33 +112,33 @@ export default function AudioPage() {
 
   const handlePlay = useCallback(
     (id: string) => {
-      const track = TRACKS.find((t) => t.id === id)
+      const track = tracks.find((t) => t.id === id)
       if (!track) return
       if (currentTrack?.id === id) {
         togglePlay()
       } else {
-        setTrack({ id: track.id, title: track.title, artist: track.artist, category: track.category, fileUrl: track.fileUrl, albumImage: track.coverEmoji })
+        setTrack({ id: track.id, title: track.title, artist: track.artist, category: track.category, fileUrl: track.fileUrl, albumImage: track.albumImage || track.coverEmoji })
         if (typeof window !== 'undefined' && typeof (window as unknown as { gtag?: unknown }).gtag === 'function') {
           (window as unknown as { gtag: (e: string, n: string, p: object) => void }).gtag('event', 'audio_play', { track_id: id })
         }
       }
     },
-    [currentTrack, togglePlay, setTrack]
+    [currentTrack, togglePlay, setTrack, tracks]
   )
 
   const handleFavourite = useCallback(
     (id: string) => {
-      const track = TRACKS.find((t) => t.id === id)
+      const track = tracks.find((t) => t.id === id)
       if (!track) return
       if (isFavourite(id)) {
         removeFavourite(id)
         info('Removed from favourites')
       } else {
-        addFavourite({ id: track.id, title: track.title, artist: track.artist, category: track.category, fileUrl: track.fileUrl, albumImage: track.coverEmoji })
+        addFavourite({ id: track.id, title: track.title, artist: track.artist, category: track.category, fileUrl: track.fileUrl, albumImage: track.albumImage || track.coverEmoji })
         success('Added to favourites ❤️')
       }
     },
-    [isFavourite, addFavourite, removeFavourite, success, info]
+    [isFavourite, addFavourite, removeFavourite, success, info, tracks]
   )
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -149,7 +149,10 @@ export default function AudioPage() {
     }
   }
 
-  const filtered = TRACKS.filter((t) => {
+  const filtered = tracks.filter((t) => {
+    // Exclude Kids Audio from the main library
+    if (t.category === 'Kids Audio') return false
+
     const matchCat = activeCategory === 'All' || t.category === activeCategory
     const matchSearch =
       t.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -185,33 +188,43 @@ export default function AudioPage() {
           </div>
         </div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-saffron"></div>
+            <p className="text-gray-400 animate-pulse">Loading tracks...</p>
+          </div>
+        )}
+
         {/* Track list */}
-        <motion.div layout className="space-y-3">
-          <AnimatePresence>
-            {filtered.length === 0 ? (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-gray-400 py-10">
-                No tracks found. Try a different search.
-              </motion.p>
-            ) : (
-              filtered.map((track) => (
-                <motion.div key={track.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <AudioCard
-                    id={track.id}
-                    title={track.title}
-                    artist={track.artist}
-                    category={track.category}
-                    duration={track.duration}
-                    coverEmoji={track.coverEmoji}
-                    isPlaying={currentTrack?.id === track.id && isPlaying}
-                    isFavourite={isFavourite(track.id)}
-                    onPlay={handlePlay}
-                    onFavourite={handleFavourite}
-                  />
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {!loading && (
+          <motion.div layout className="space-y-3">
+            <AnimatePresence>
+              {filtered.length === 0 ? (
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center text-gray-400 py-10">
+                  No tracks found. Try a different search.
+                </motion.p>
+              ) : (
+                filtered.map((track) => (
+                  <motion.div key={track.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <AudioCard
+                      id={track.id}
+                      title={track.title}
+                      artist={track.artist}
+                      category={track.category}
+                      duration={track.duration}
+                      coverEmoji={track.albumImage || track.coverEmoji}
+                      isPlaying={currentTrack?.id === track.id && isPlaying}
+                      isFavourite={isFavourite(track.id)}
+                      onPlay={handlePlay}
+                      onFavourite={handleFavourite}
+                    />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
 
       {/* ──────────── Sticky Audio Player ──────────── */}

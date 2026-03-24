@@ -1,0 +1,17 @@
+{
+  "name": "Spiritual Insights",
+  "short_name": "Spiritual",
+  "description": "Your daily spiritual companion — mantras, stories, meditation, and more.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FEFCF8",
+  "theme_color": "#FF9933",
+  "icons": [
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -5,6 +5,8 @@ import { motion } from 'framer-motion'
 import { useMalaStore } from '@/store/malaStore'
 import { RotateCcw, Play, Pause } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { useSession } from 'next-auth/react'
+import { useToast } from '@/store/toastStore'
 
 const BEAD_COUNT = 108
 const RADIUS = 140
@@ -16,10 +18,38 @@ function polarToCartesian(cx: number, cy: number, r: number, angleDeg: number) {
 }
 
 export default function JapMalaPage() {
-  const { count, completedMalas, isRunning, increment, reset, pause, resume } = useMalaStore()
+  const { count, completedMalas, isRunning, increment, reset, pause, resume, selectedMantra } = useMalaStore()
   const { t } = useTranslation()
+  const { data: session } = useSession()
+  const { success, error: toastError } = useToast()
 
   const toggleRunning = () => (isRunning ? pause() : resume())
+
+  const handleReset = async () => {
+    const userId = (session?.user as { id?: string })?.id
+    const totalSessionCount = (completedMalas * 108) + count
+
+    if (userId && totalSessionCount > 0) {
+      try {
+        const res = await fetch('/api/jap-mala/session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            userId,
+            mantraName: selectedMantra || 'Om Namah Shivaya',
+            count: totalSessionCount,
+            completedMalas
+          })
+        })
+        if (!res.ok) throw new Error('Failed to save')
+        success('Session saved to profile! 🙏')
+      } catch (err) {
+        console.error('Error saving Jap session:', err)
+        toastError('Failed to save session')
+      }
+    }
+    reset()
+  }
 
   const handleBeadClick = useCallback(() => {
     if (isRunning) increment()
@@ -28,8 +58,8 @@ export default function JapMalaPage() {
   const prevCompletedRef = useRef(completedMalas)
   useEffect(() => {
     if (completedMalas > prevCompletedRef.current) {
-      if (typeof window !== 'undefined' && typeof (window as unknown as { gtag?: unknown }).gtag === 'function') {
-        (window as unknown as { gtag: (e: string, n: string, p: object) => void }).gtag('event', 'jap_mala_complete', {
+      if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+        (window as any).gtag('event', 'jap_mala_complete', {
           total_malas: completedMalas
         })
       }
@@ -66,7 +96,7 @@ export default function JapMalaPage() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
-          className="grid grid-cols-3 gap-4 mb-8"
+          className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8"
         >
           {[
             { label: t('CurrentBead'), value: `${currentBead} / ${BEAD_COUNT}` },
@@ -145,12 +175,12 @@ export default function JapMalaPage() {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={reset}
+            onClick={handleReset}
             className="flex items-center gap-2 rounded-full border border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 px-6 py-3 text-sm font-medium text-gray-600 dark:text-gray-300 shadow-sm hover:bg-gray-50 transition-all"
-            aria-label="Reset mala"
+            aria-label="Save and Reset mala"
           >
             <RotateCcw size={16} />
-            {t('Reset')}
+            {count > 0 || completedMalas > 0 ? 'Save & Reset' : t('Reset')}
           </motion.button>
 
           <motion.button

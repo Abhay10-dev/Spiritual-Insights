@@ -1,38 +1,49 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import VideoCard from '@/components/ui/VideoCard'
 import SearchBar from '@/components/ui/SearchBar'
 import CategoryTabs from '@/components/ui/CategoryTabs'
+import { useToast } from '@/store/toastStore'
 
 const CATEGORIES = ['All', 'Spiritual Shorts', 'Kids Stories', 'Festival Specials', 'Temple Docs']
 
-const VIDEOS = [
-  { id: '1', title: 'The Story of Lord Shiva', category: 'Spiritual Shorts', duration: '8:30', thumbnailEmoji: '🕉️' },
-  { id: '2', title: 'Krishna and Sudama', category: 'Kids Stories', duration: '12:00', thumbnailEmoji: '🦚' },
-  { id: '3', title: 'Diwali Celebration Guide', category: 'Festival Specials', duration: '15:00', thumbnailEmoji: '🪔' },
-  { id: '4', title: 'Varanasi Temple Tour', category: 'Temple Docs', duration: '22:00', thumbnailEmoji: '⛪' },
-  { id: '5', title: "Hanuman's Devotion", category: 'Spiritual Shorts', duration: '6:45', thumbnailEmoji: '🐒' },
-  { id: '6', title: "Ganesha's Wisdom Tales", category: 'Kids Stories', duration: '9:20', thumbnailEmoji: '🐘' },
-  { id: '7', title: 'Holi — Festival of Colors', category: 'Festival Specials', duration: '18:00', thumbnailEmoji: '🎨' },
-  { id: '8', title: 'Tirupati Balaji Documentary', category: 'Temple Docs', duration: '35:00', thumbnailEmoji: '🏛️' },
-]
-
-const RECOMMENDED = [VIDEOS[0], VIDEOS[2], VIDEOS[4]]
-
 export default function VideosPage() {
+  const [videos, setVideos] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [activeVideo, setActiveVideo] = useState<string | null>(null)
+  const { error: toastError } = useToast()
 
-  const filtered = VIDEOS.filter((v) => {
+  React.useEffect(() => {
+    const fetchVideos = async () => {
+      try {
+        const res = await fetch('/api/video-library')
+        const data = await res.json()
+        if (data.videos) {
+          setVideos(data.videos)
+        }
+      } catch (err) {
+        console.error('Failed to fetch videos:', err)
+        toastError('Failed to load videos.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVideos()
+  }, [])
+
+  const RECOMMENDED = videos.slice(7, 10) // Simple recommendation logic
+
+  const filtered = videos.filter((v) => {
     const matchCat = activeCategory === 'All' || v.category === activeCategory
     const matchSearch = v.title.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
 
-  const currentVideo = VIDEOS.find((v) => v.id === activeVideo)
+  const currentVideo = videos.find((v) => v.id === activeVideo)
 
   const handleOpen = (id: string) => {
     setActiveVideo(id)
@@ -55,28 +66,30 @@ export default function VideosPage() {
 
       <div className="mx-auto max-w-5xl px-4 -mt-6 space-y-6 pb-10">
         {/* Recommended row */}
-        <section aria-label="Recommended videos">
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">⭐ Recommended for You</h2>
-          <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
-            {RECOMMENDED.map((v) => (
-              <motion.button
-                key={v.id}
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => handleOpen(v.id)}
-                className="snap-start flex-shrink-0 w-48 rounded-2xl glass-card border border-white/60 overflow-hidden shadow-md text-left"
-              >
-                <div className="flex h-28 items-center justify-center gradient-calm">
-                  <span className="text-5xl">{v.thumbnailEmoji}</span>
-                </div>
-                <div className="p-3">
-                  <p className="text-xs font-semibold text-gray-700 truncate">{v.title}</p>
-                  <p className="text-xs text-saffron mt-0.5">{v.category}</p>
-                </div>
-              </motion.button>
-            ))}
-          </div>
-        </section>
+        {!loading && RECOMMENDED.length > 0 && (
+          <section aria-label="Recommended videos">
+            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-3">⭐ Recommended for You</h2>
+            <div className="flex gap-4 overflow-x-auto pb-2 snap-x">
+              {RECOMMENDED.map((v) => (
+                <motion.button
+                  key={v.id}
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => handleOpen(v.id)}
+                  className="snap-start flex-shrink-0 w-48 rounded-2xl glass-card border border-white/60 overflow-hidden shadow-md text-left"
+                >
+                  <div className="flex h-28 items-center justify-center gradient-calm">
+                    <span className="text-5xl">{v.thumbnailEmoji || v.thumbnailUrl}</span>
+                  </div>
+                  <div className="p-3">
+                    <p className="text-xs font-semibold text-gray-700 truncate">{v.title}</p>
+                    <p className="text-xs text-saffron mt-0.5">{v.category}</p>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Search + Tabs */}
         <div className="glass-card rounded-2xl p-4 shadow-md border border-white/60">
@@ -95,13 +108,15 @@ export default function VideosPage() {
               exit={{ opacity: 0, scale: 0.95 }}
               className="glass-card rounded-2xl border border-white/60 overflow-hidden shadow-xl"
             >
-              <div className="flex h-64 items-center justify-center gradient-calm relative">
-                <span className="text-8xl opacity-30">{currentVideo.thumbnailEmoji}</span>
-                <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-5xl mb-2">{currentVideo.thumbnailEmoji}</span>
-                  <p className="font-bold text-gray-800">{currentVideo.title}</p>
-                  <p className="text-sm text-gray-500 mt-1">{currentVideo.duration}</p>
-                </div>
+              <div className="relative w-full h-64">
+                <iframe
+                  className="w-full h-full rounded-t-2xl"
+                  src={`${currentVideo.videoUrl}${currentVideo.videoUrl.includes('?') ? '&' : '?'}autoplay=1`}
+                  title={currentVideo.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
               </div>
               <div className="p-4 flex justify-between items-center">
                 <div>
@@ -120,22 +135,32 @@ export default function VideosPage() {
           )}
         </AnimatePresence>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-saffron"></div>
+            <p className="text-gray-400 animate-pulse">Fetching divine videos...</p>
+          </div>
+        )}
+
         {/* Grid */}
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          <AnimatePresence>
-            {filtered.length === 0 ? (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full text-center text-gray-400 py-10">
-                No videos found.
-              </motion.p>
-            ) : (
-              filtered.map((v) => (
-                <motion.div key={v.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <VideoCard {...v} onClick={handleOpen} />
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {!loading && (
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <AnimatePresence>
+              {filtered.length === 0 ? (
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full text-center text-gray-400 py-10">
+                  No videos found.
+                </motion.p>
+              ) : (
+                filtered.map((v) => (
+                  <motion.div key={v.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <VideoCard {...v} thumbnailEmoji={v.thumbnailEmoji || v.thumbnailUrl} onClick={handleOpen} />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </div>
   )

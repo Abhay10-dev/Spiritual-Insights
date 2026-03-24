@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Send, Sparkles } from 'lucide-react'
 import ChatMessage from '@/components/ui/ChatMessage'
 import { useSession } from 'next-auth/react'
-import { saveChatHistory } from '@/lib/db'
 
 interface Message {
   role: 'user' | 'ai'
@@ -41,24 +40,6 @@ export default function AIGuidePage() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, loading])
 
-  // Save session to Firestore when user leaves or session has >= 2 messages
-  useEffect(() => {
-    const userId = (session?.user as { id?: string })?.id
-    if (!userId || messages.length < 2) return
-
-    const saveSession = () => {
-      const forStorage = messages.map((m) => ({
-        role: m.role,
-        content: m.content,
-        timestamp: m.timestamp,
-      }))
-      saveChatHistory(userId, forStorage).catch(console.error)
-    }
-
-    window.addEventListener('beforeunload', saveSession)
-    return () => window.removeEventListener('beforeunload', saveSession)
-  }, [session, messages])
-
   const sendMessage = async (text: string) => {
     if (!text.trim() || loading) return
     const userMsg: Message = { role: 'user', content: text.trim(), timestamp: getTimestamp() }
@@ -67,8 +48,8 @@ export default function AIGuidePage() {
     setLoading(true)
 
     // GA event
-    if (typeof window !== 'undefined' && typeof (window as unknown as { gtag?: unknown }).gtag === 'function') {
-      (window as unknown as { gtag: (e: string, n: string, p: object) => void }).gtag('event', 'ai_chat_sent', { message_length: text.trim().length })
+    if (typeof window !== 'undefined' && typeof (window as any).gtag === 'function') {
+      (window as any).gtag('event', 'ai_chat_sent', { message_length: text.trim().length })
     }
 
     try {
@@ -130,8 +111,8 @@ export default function AIGuidePage() {
         </motion.div>
       )}
 
-      {/* Messages */}
-      <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4">
+      {/* Messages container */}
+      <div className="flex-1 overflow-y-auto space-y-4 pr-2 pb-4 scrollbar-thin scrollbar-thumb-gray-200">
         <AnimatePresence initial={false}>
           {messages.map((msg, i) => (
             <motion.div
@@ -172,22 +153,22 @@ export default function AIGuidePage() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
         onSubmit={(e) => { e.preventDefault(); sendMessage(input) }}
-        className="flex gap-3 mt-3"
+        className="flex gap-3 mt-3 bg-white p-2 rounded-3xl shadow-lg border border-gray-100"
       >
         <input
           type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          placeholder="Ask about mantras, meditation, mythology…"
+          placeholder="Ask a spiritual question…"
           disabled={loading}
           aria-label="Ask a spiritual question"
-          className="flex-1 rounded-2xl border border-gray-200 bg-white px-4 py-3 text-sm text-gray-800 placeholder-gray-400 shadow-sm focus:border-saffron focus:outline-none focus:ring-2 focus:ring-saffron/20 disabled:opacity-60 transition-all"
+          className="flex-1 bg-transparent px-2 py-2 text-sm text-gray-800 placeholder-gray-400 focus:outline-none disabled:opacity-60"
         />
         <motion.button
           type="submit"
           disabled={!input.trim() || loading}
           whileTap={{ scale: 0.95 }}
-          className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl gradient-spiritual text-white shadow-md disabled:opacity-50 transition-opacity"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full gradient-spiritual text-white shadow-md disabled:opacity-50 transition-opacity"
           aria-label="Send message"
         >
           <Send size={18} />

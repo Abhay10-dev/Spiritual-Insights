@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { db } from '@/lib/firebase'
-import { collection, addDoc, query, where, orderBy, limit, getDocs, serverTimestamp } from 'firebase/firestore'
+import dbConnect from '@/lib/mongodb'
+import JapSession from '@/models/JapSession'
 import { apiRateLimiter } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
@@ -19,16 +19,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'userId, mantraName, and count are required' }, { status: 400 })
     }
 
-    const ref = collection(db, 'jap_sessions')
-    const docRef = await addDoc(ref, {
+    await dbConnect()
+    const newSession = await JapSession.create({
       userId,
       mantraName,
       count,
       completedMalas: completedMalas ?? 0,
-      createdAt: serverTimestamp(),
     })
 
-    return NextResponse.json({ id: docRef.id, success: true })
+    return NextResponse.json({ id: newSession._id.toString(), success: true })
   } catch (err) {
     console.error('[/api/jap-mala/session POST] Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
@@ -44,12 +43,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'userId query parameter is required' }, { status: 400 })
     }
 
-    const ref = collection(db, 'jap_sessions')
-    const q = query(ref, where('userId', '==', userId), orderBy('createdAt', 'desc'), limit(20))
-    const snap = await getDocs(q)
-    const sessions = snap.docs.map((d) => ({ id: d.id, ...d.data() }))
+    await dbConnect()
+    const sessions = await JapSession.find({ userId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean()
 
-    return NextResponse.json({ sessions })
+    const formattedSessions = sessions.map((d: any) => ({
+      id: d._id.toString(),
+      ...d,
+      _id: undefined,
+      __v: undefined,
+    }))
+
+    return NextResponse.json({ sessions: formattedSessions })
   } catch (err) {
     console.error('[/api/jap-mala/session GET] Error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

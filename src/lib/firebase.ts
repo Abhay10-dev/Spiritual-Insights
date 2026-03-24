@@ -1,5 +1,4 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app'
-import { getFirestore, Firestore } from 'firebase/firestore'
 import { getStorage, FirebaseStorage } from 'firebase/storage'
 import { getAnalytics, Analytics, isSupported } from 'firebase/analytics'
 
@@ -16,9 +15,6 @@ const firebaseConfig = {
 // Initialise Firebase — prevent duplicate app instances (Next.js HMR)
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp()
 
-// Firestore database instance
-const db: Firestore = getFirestore(app)
-
 // Firebase Storage instance
 const storage: FirebaseStorage = getStorage(app)
 
@@ -32,4 +28,4 @@ if (typeof window !== 'undefined') {
   })
 }
 
-export { app, db, storage, analytics }
+export { app, storage, analytics }

@@ -18,6 +18,13 @@ export const metadata: Metadata = {
     'A calm, modern spiritual platform for devotional content, guided meditation, AI spiritual guidance, and a safe Kids Zone.',
   keywords: ['spiritual', 'meditation', 'mantra', 'bhajan', 'jap mala', 'kids zone', 'devotional'],
   authors: [{ name: 'Spiritual Insights' }],
+  manifest: '/manifest.json',
+  themeColor: '#FF9933',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Spiritual Insights',
+  },
   openGraph: {
     title: 'Spiritual Insights',
     description: 'Your daily spiritual companion — mantras, stories, meditation, and more.',
@@ -39,7 +46,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={`min-h-screen bg-[#FEFCF8] dark:bg-slate-900 text-gray-900 dark:text-gray-100 font-sans antialiased ${poppins.className}`}>
         <ThemeProvider>
           <AuthProvider>

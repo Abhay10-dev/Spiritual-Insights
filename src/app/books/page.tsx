@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import BookCard from '@/components/ui/BookCard'
 import SearchBar from '@/components/ui/SearchBar'
@@ -10,26 +10,35 @@ import { useToast } from '@/store/toastStore'
 
 const CATEGORIES = ['All', 'Spiritual Books', 'Kids Books', 'Coloring Books']
 
-const BOOKS = [
-  { id: '1', title: 'Bhagavad Gita As It Is', author: 'A.C. Bhaktivedanta', category: 'Spiritual Books', coverEmoji: '📘', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '2', title: 'The Ramayana', author: 'Valmiki', category: 'Spiritual Books', coverEmoji: '📗', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '3', title: 'Stories of Krishna for Kids', author: 'Illustrated Series', category: 'Kids Books', coverEmoji: '🦚', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '4', title: 'Panchatantra Tales', author: 'Vishnu Sharma', category: 'Kids Books', coverEmoji: '🐒', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '5', title: 'Hindu Gods Coloring Book', author: 'Art Collections', category: 'Coloring Books', coverEmoji: '🖍️', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '6', title: 'Ganesha Coloring Pages', author: 'Creative Series', category: 'Coloring Books', coverEmoji: '🐘', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '7', title: 'Autobiography of a Yogi', author: 'Paramahansa Yogananda', category: 'Spiritual Books', coverEmoji: '📙', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-  { id: '8', title: 'Hanuman Stories for Children', author: 'Kids Spiritual Series', category: 'Kids Books', coverEmoji: '🐒', pdfUrl: 'https://www.africau.edu/images/default/sample.pdf' },
-]
-
 export default function BooksPage() {
+  const [books, setBooks] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [activeCategory, setActiveCategory] = useState('All')
   const [search, setSearch] = useState('')
   const [openBook, setOpenBook] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [bookmarks, setBookmarks] = useState<string[]>([])
-  const { success, info } = useToast()
+  const { success, info, error: toastError } = useToast()
 
-  const filtered = BOOKS.filter((b) => {
+  React.useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const res = await fetch('/api/books')
+        const data = await res.json()
+        if (data.books) {
+          setBooks(data.books)
+        }
+      } catch (err) {
+        console.error('Failed to fetch books:', err)
+        toastError('Failed to load books. Please refresh.')
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBooks()
+  }, [])
+
+  const filtered = books.filter((b) => {
     const matchCat = activeCategory === 'All' || b.category === activeCategory
     const matchSearch =
       b.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -37,7 +46,7 @@ export default function BooksPage() {
     return matchCat && matchSearch
   })
 
-  const currentBook = BOOKS.find((b) => b.id === openBook)
+  const currentBook = books.find((b) => b.id === openBook)
 
   const handleOpenBook = (id: string) => {
     setOpenBook(id)
@@ -90,7 +99,7 @@ export default function BooksPage() {
               {/* Toolbar */}
               <div className="flex items-center justify-between p-4 border-b border-gray-100">
                 <div className="flex items-center gap-3">
-                  <span className="text-3xl">{currentBook.coverEmoji}</span>
+                  <span className="text-3xl">{currentBook.coverEmoji || currentBook.coverImage}</span>
                   <div>
                     <p className="font-semibold text-gray-800 text-sm">{currentBook.title}</p>
                     <p className="text-xs text-gray-500">{currentBook.author}</p>
@@ -188,22 +197,32 @@ export default function BooksPage() {
           )}
         </AnimatePresence>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-saffron"></div>
+            <p className="text-gray-400 animate-pulse">Fetching divine books...</p>
+          </div>
+        )}
+
         {/* Book grid */}
-        <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
-          <AnimatePresence>
-            {filtered.length === 0 ? (
-              <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full text-center text-gray-400 py-10">
-                No books found.
-              </motion.p>
-            ) : (
-              filtered.map((b) => (
-                <motion.div key={b.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                  <BookCard {...b} onClick={handleOpenBook} />
-                </motion.div>
-              ))
-            )}
-          </AnimatePresence>
-        </motion.div>
+        {!loading && (
+          <motion.div layout className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-5">
+            <AnimatePresence>
+              {filtered.length === 0 ? (
+                <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="col-span-full text-center text-gray-400 py-10">
+                  No books found.
+                </motion.p>
+              ) : (
+                filtered.map((b) => (
+                  <motion.div key={b.id} layout initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                    <BookCard {...b} coverEmoji={b.coverEmoji || b.coverImage} onClick={handleOpenBook} />
+                  </motion.div>
+                ))
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </div>
     </div>
   )

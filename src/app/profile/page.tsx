@@ -8,20 +8,17 @@ import { useTheme } from 'next-themes'
 import { useTranslation } from 'react-i18next'
 import '@/lib/i18n' // import the client-side i18n instance
 import { useAudioStore } from '@/store/audioStore'
-import { getJapSessions } from '@/lib/db'
 
 interface Session {
   id: string
   mantraName: string
   count: number
   completedMalas: number
-  createdAt: { seconds?: number } | string
+  createdAt: string
 }
 
-const formatDate = (val: { seconds?: number } | string) => {
-  const date = typeof val === 'object' && val?.seconds
-    ? new Date(val.seconds * 1000)
-    : new Date(val as string)
+const formatDate = (val: string) => {
+  const date = new Date(val)
   return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
@@ -37,8 +34,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!userId) { setLoadingSessions(false); return }
-    getJapSessions(userId)
-      .then((data) => setSessions(data as Session[]))
+    fetch(`/api/jap-mala/session?userId=${userId}`)
+      .then((res) => res.json())
+      .then((data) => setSessions(data.sessions || []))
       .catch(console.error)
       .finally(() => setLoadingSessions(false))
   }, [userId])
